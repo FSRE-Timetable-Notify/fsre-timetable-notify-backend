@@ -34,6 +34,8 @@ build/
 
 ### Secrets ###
 service_account_key.json
+.env
+.env.*
 
 ### Generated Files ###
 logs/
