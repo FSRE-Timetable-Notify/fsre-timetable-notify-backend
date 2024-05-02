@@ -15,7 +15,8 @@
 	<name>FSRE Timetable Notify Backend</name>
 	<description>Backend for the FSRE Timetable Notifier project</description>
 	<properties>
-		<java.version>22</java.version>
+		<java.version>21</java.version>
+		<start-class>me.leopetrovic.fsretimetablenotify.FsreTimetableNotifyBackendApplication</start-class>
 	</properties>
 	<dependencies>
 		<dependency>
