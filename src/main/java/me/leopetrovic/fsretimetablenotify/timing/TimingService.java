@@ -33,10 +33,10 @@ public class TimingService {
 	@Autowired
 	private TimetableService timetableService;
 
-	@Scheduled(cron = "30 * * * * *")
+	@Scheduled(cron = "0 */15 * * * *")
 	public void refreshTimetables() {
 		// For each study program
-		log.debug("Refreshing timetables for "
+		log.info("Refreshing timetables for "
 				+ timetableDatabaseService.getTimetableDatabase().getStudyPrograms().size() + " study programs");
 		timetableDatabaseService.getTimetableDatabase().getStudyPrograms().forEach(studyProgram -> {
 			final List<MessagingSubscription> subscribers = messagingService.getAllByStudyProgramId(studyProgram.getId());
@@ -67,7 +67,7 @@ public class TimingService {
 
 								final TimetableDifference difference = getDifference(existingTimetable, newTimetable);
 								if (!difference.newEvents.isEmpty() || !difference.removedEvents.isEmpty()) {
-									log.debug("Timetable for " + timetableKey + " has changed - "
+									log.info("Timetable for " + timetableKey + " has changed - "
 											+ (difference.newEvents.size() + difference.removedEvents.size()) + " changes");
 
 									// Send a message to each subscriber of the study program
@@ -85,7 +85,7 @@ public class TimingService {
 								timetableService.setTimetable(timetableKey, newTimetable);
 							} else {
 								log
-										.debug("No previous timetable found for " + timetableKey + " found, skipping message and caching");
+										.warn("No previous timetable found for " + timetableKey + " found, skipping message and caching");
 								timetableService.setTimetable(timetableKey, newTimetable);
 							}
 						}).join();
