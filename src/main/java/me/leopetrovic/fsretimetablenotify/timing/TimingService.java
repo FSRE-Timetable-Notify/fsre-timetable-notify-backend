@@ -46,7 +46,7 @@ public class TimingService {
 				log.debug("No subscriptions found for study program " + studyProgram.getId() + ", skipping");
 				return;
 			} else {
-				log.debug("Found " + subscribers.size()
+				log.info("Found " + subscribers.size()
 						+ " subscriptions for study program " + studyProgram.getId());
 			}
 
