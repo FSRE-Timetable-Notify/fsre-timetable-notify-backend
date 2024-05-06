@@ -1,6 +1,6 @@
 package me.leopetrovic.fsretimetablenotify.messaging;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +67,7 @@ public class MessagingService {
 							objectMapper.writeValueAsString(timetableUpdatedMessageDto.difference().getRemovedEvents()))
 					.putData("timetableKey", objectMapper.writeValueAsString(timetableUpdatedMessageDto
 							.timetableKey()))
-					.putData("timestamp", LocalDateTime.now().toString())
+					.putData("timestamp", Instant.now().toString())
 					.setAndroidConfig(AndroidConfig.builder().setPriority(
 							com.google.firebase.messaging.AndroidConfig.Priority.HIGH)
 							.setNotification(AndroidNotification.builder().setPriority(
