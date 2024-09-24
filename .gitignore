@@ -36,6 +36,7 @@ build/
 service_account_key.json
 .env
 .env.*
+!.env.example
 
 ### Generated Files ###
 logs/
