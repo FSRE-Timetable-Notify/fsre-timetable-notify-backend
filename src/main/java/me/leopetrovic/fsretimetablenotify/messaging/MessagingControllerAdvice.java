@@ -17,7 +17,6 @@ import me.leopetrovic.fsretimetablenotify.messaging.exceptions.MessagingSubscrip
 @Order(1)
 @ControllerAdvice(assignableTypes = MessagingController.class)
 public class MessagingControllerAdvice {
-
 	@ExceptionHandler(MessagingSubscriptionAlreadyRegisteredException.class)
 	@ResponseStatus(HttpStatus.CONFLICT)
 	@ApiResponses(value = {
@@ -27,7 +26,8 @@ public class MessagingControllerAdvice {
 	})
 	public ResponseEntity<FsreError> handleMessagingSubscriptionAlreadyRegisteredException(
 			MessagingSubscriptionAlreadyRegisteredException e) {
-		final FsreError fsreException = new FsreError(HttpStatus.CONFLICT, "Messaging Subscription Already Registered",
+		final FsreError fsreException = new FsreError(HttpStatus.CONFLICT,
+				"Messaging Subscription Already Registered",
 				e.getMessage());
 
 		return ResponseEntity.status(fsreException.getStatus()).body(fsreException);

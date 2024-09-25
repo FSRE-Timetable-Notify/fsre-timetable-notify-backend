@@ -74,9 +74,10 @@ public class TimingService {
 									messagingService.getAllByStudyProgramId(studyProgram.getId()).forEach(messagingSubscription -> {
 										log.debug("Sending message...");
 
-										messagingService.sendMessage(messagingSubscription.getFcmToken(), new TimetableUpdatedMessageDto(
-												difference,
-												timetableKey));
+										messagingService.sendMessage(
+												messagingSubscription, new TimetableUpdatedMessageDto(
+														difference,
+														timetableKey));
 									});
 								} else {
 									log.debug("Timetable for " + timetableKey + " has not changed, skipping message");

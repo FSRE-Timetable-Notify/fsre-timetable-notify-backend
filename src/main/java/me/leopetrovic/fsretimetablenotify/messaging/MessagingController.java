@@ -28,7 +28,7 @@ public class MessagingController {
 
 	@PostMapping("/subscribe")
 	@ResponseStatus(HttpStatus.OK)
-	@Operation(summary = "Subscribe to a study program using an FCM token")
+	@Operation(summary = "Subscribe to a study program using an email and/or FCM token")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Successfully subscribed to a topic", content = {
 					@Content(mediaType = "application/json", schema = @Schema(implementation = MessagingSubscription.class))
@@ -37,18 +37,20 @@ public class MessagingController {
 	public ResponseEntity<MessagingSubscription> subscribe(
 			@RequestBody @Valid MessagingSubscribeDto messagingSubscribeDto) {
 		return ResponseEntity
-				.ok(messagingService.subscribe(messagingSubscribeDto.fcmToken(), messagingSubscribeDto.studyProgramId()));
+				.ok(messagingService.subscribe(messagingSubscribeDto.email(), messagingSubscribeDto.fcmToken(),
+						messagingSubscribeDto.studyProgramId()));
 	}
 
 	@PostMapping("/unsubscribe")
 	@ResponseStatus(HttpStatus.OK)
-	@Operation(summary = "Unubscribe from a study program for a specific FCM token")
+	@Operation(summary = "Unsubscribe from a study program for a specific email and/or FCM token")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Successfully unsubscribed from a topic")
 	})
 	public ResponseEntity<Void> unsubscribe(
 			@RequestBody @Valid MessagingSubscribeDto messagingSubscribeDto) {
-		messagingService.unsubscribe(messagingSubscribeDto.fcmToken(), messagingSubscribeDto.studyProgramId());
+		messagingService.unsubscribe(messagingSubscribeDto.email(), messagingSubscribeDto.fcmToken(),
+				messagingSubscribeDto.studyProgramId());
 
 		return ResponseEntity.ok().build();
 	}

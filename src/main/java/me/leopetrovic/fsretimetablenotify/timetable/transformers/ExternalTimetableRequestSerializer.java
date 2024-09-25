@@ -25,7 +25,7 @@ public class ExternalTimetableRequestSerializer extends JsonSerializer<ExternalF
 		gen.writeStringField("dateto", value.yearWeek().atDay(DayOfWeek.SUNDAY).toString());
 		gen.writeStringField("id", value.studyProgramId().toString());
 		gen.writeStringField("table", "classes");
-		gen.writeNumberField("year", value.yearWeek().getYear() - 1);
+		gen.writeNumberField("year", value.yearWeek().getYear());
 		gen.writeEndObject();
 
 		gen.writeEndArray();

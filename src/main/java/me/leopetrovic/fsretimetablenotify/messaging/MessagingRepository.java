@@ -12,5 +12,9 @@ import me.leopetrovic.fsretimetablenotify.messaging.models.MessagingSubscription
 public interface MessagingRepository extends JpaRepository<MessagingSubscription, UUID> {
 	List<MessagingSubscription> findByFcmToken(String fcmToken);
 
+	List<MessagingSubscription> findByEmail(String email);
+
+	List<MessagingSubscription> findByEmailAndFcmToken(String email, String fcmToken);
+
 	List<MessagingSubscription> findByStudyProgramId(Long studyProgramId);
 }
