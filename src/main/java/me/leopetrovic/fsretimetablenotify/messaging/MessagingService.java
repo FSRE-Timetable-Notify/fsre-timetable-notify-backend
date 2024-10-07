@@ -157,11 +157,13 @@ public class MessagingService {
 		var teacherNames = event.getTeacherNames();
 		var classRoomNames = event.getClassRoomNames();
 		var studyProgramNames = event.getStudyProgramNames();
-		var formatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneOffset.UTC);
-
+		var timeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneOffset.UTC);
+                var dateFormatter = DateTimeFormatter.ofPattern("E, dd MMM").withZone(ZoneOffset.UTC);
+	
 		content += "<li style=\"background-color: rgba(" + (isNew ? "0, 255" : "255, 0")
-				+ ", 0, 0.1); padding: 1rem;\"><strong>" + eventName + "</strong><ul>";
-		content += "<li>Duration: " + formatter.format(startDate) + " - " + formatter.format(endDate) + "</li>";
+			+ ", 0, 0.1); padding: 1rem;\"><strong>" + eventName + "</strong><ul>";
+		content += "<li>Duration: " + timeFormatter.format(startDate) + " - " + timeFormatter.format(endDate) + "</li>";
+		content += "<li>Date: " + dateFormatter.format(startDate) + "</li>";
 
 		if (teacherNames.size() == 1) {
 			content += "<li>Teacher: " + teacherNames.get(0) + "</li>";
