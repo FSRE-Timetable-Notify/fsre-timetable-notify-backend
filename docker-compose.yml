@@ -12,6 +12,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    logging:
+      options:
+        max-size: "10m"
   db:
     container_name: db
     image: mariadb:latest
@@ -36,7 +39,7 @@ services:
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
-     - db-data:/var/lib/mysql
-
-volumes:
-    db-data:
+      - ./db-data:/var/lib/mysql
+    logging:
+      options:
+        max-size: "10m"

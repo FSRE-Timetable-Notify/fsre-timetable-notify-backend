@@ -40,3 +40,4 @@ service_account_key.json
 
 ### Generated Files ###
 logs/
+db-data/
