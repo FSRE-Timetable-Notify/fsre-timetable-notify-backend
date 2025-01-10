@@ -25,7 +25,9 @@ public class ExternalTimetableRequestSerializer extends JsonSerializer<ExternalF
 		gen.writeStringField("dateto", value.yearWeek().atDay(DayOfWeek.SUNDAY).toString());
 		gen.writeStringField("id", value.studyProgramId().toString());
 		gen.writeStringField("table", "classes");
-		gen.writeNumberField("year", value.yearWeek().getYear());
+		// year should always be the lower even year (eg. 2024 -> 2024, 2025 -> 2024)
+		var year = value.yearWeek().getYear() - (value.yearWeek().getYear() % 2);
+		gen.writeNumberField("year", year);
 		gen.writeEndObject();
 
 		gen.writeEndArray();
