@@ -39,89 +39,87 @@ public class TimingService {
 
     @Scheduled(cron = "0 */15 * * * *")
     public void refreshTimetables() {
+        var studyPrograms = timetableDatabaseService.getTimetableDatabase()
+            .getStudyPrograms();
+
         // For each study program
         log.info("Refreshing timetables for {} study programs",
-            timetableDatabaseService.getTimetableDatabase()
-                .getStudyPrograms()
-                .size());
-        timetableDatabaseService.getTimetableDatabase()
-            .getStudyPrograms()
-            .forEach(studyProgram -> {
-                final List<MessagingSubscription> subscribers = messagingService.getAllByStudyProgramId(
+            studyPrograms.size());
+        studyPrograms.forEach(studyProgram -> {
+            final List<MessagingSubscription> subscribers = messagingService.getAllByStudyProgramId(
+                studyProgram.getId());
+
+            // If there are no subscriptions for the study program, skip
+            if (subscribers.isEmpty()) {
+                log.debug(
+                    "No subscriptions found for study program {}, skipping",
                     studyProgram.getId());
+                return;
+            } else {
+                log.info("Found {} subscriptions for study program {}",
+                    subscribers.size(),
+                    studyProgram.getId());
+            }
 
-                // If there are no subscriptions for the study program, skip
-                if (subscribers.isEmpty()) {
-                    log.debug(
-                        "No subscriptions found for study program {}, skipping",
-                        studyProgram.getId());
-                    return;
-                } else {
-                    log.info("Found {} subscriptions for study program {}",
-                        subscribers.size(),
-                        studyProgram.getId());
-                }
+            // Else, fetch the timetable for the current and next week
+            final TimetableKey currentTimetableKey = new TimetableKey(
+                studyProgram.getId(),
+                YearWeek.now());
+            final TimetableKey nextTimetableKey = new TimetableKey(studyProgram.getId(),
+                YearWeek.now().plusWeeks(1));
 
-                // Else, fetch the timetable for the current and next week
-                final TimetableKey currentTimetableKey = new TimetableKey(
-                    studyProgram.getId(),
-                    YearWeek.now());
-                final TimetableKey nextTimetableKey = new TimetableKey(
-                    studyProgram.getId(),
-                    YearWeek.now().plusWeeks(1));
+            for (TimetableKey timetableKey : new TimetableKey[]{
+                currentTimetableKey, nextTimetableKey}) {
+                log.debug("Fetching timetable for {}", timetableKey);
+                timetableService.fetchTimetable(timetableKey)
+                    .thenAccept(newTimetable -> {
+                        // If a previously cached timetable exists and is different from the previous
+                        // fetch, send a message
+                        final Optional<Timetable> maybeExistingTimetable = timetableService.getTimetable(
+                            timetableKey);
+                        if (maybeExistingTimetable.isPresent()) {
+                            final Timetable existingTimetable = maybeExistingTimetable.get();
 
-                for (TimetableKey timetableKey : new TimetableKey[]{
-                    currentTimetableKey, nextTimetableKey}) {
-                    log.debug("Fetching timetable for {}", timetableKey);
-                    timetableService.fetchTimetable(timetableKey)
-                        .thenAccept(newTimetable -> {
-                            // If a previously cached timetable exists and is different from the previous
-                            // fetch, send a message
-                            final Optional<Timetable> maybeExistingTimetable = timetableService.getTimetable(
-                                timetableKey);
-                            if (maybeExistingTimetable.isPresent()) {
-                                final Timetable existingTimetable = maybeExistingTimetable.get();
-
-                                final TimetableDifference difference = getDifference(
-                                    existingTimetable,
-                                    newTimetable);
-                                if (!difference.newEvents.isEmpty() || !difference.removedEvents.isEmpty()) {
-                                    log.info(
-                                        "Timetable for {} has changed - {} changes",
-                                        timetableKey,
-                                        difference.newEvents.size() + difference.removedEvents.size());
-
-                                    // Send a message to each subscriber of the study program
-                                    messagingService.getAllByStudyProgramId(
-                                            studyProgram.getId())
-                                        .forEach(messagingSubscription -> {
-                                            log.debug("Sending message...");
-
-                                            messagingService.sendMessage(
-                                                messagingSubscription,
-                                                new TimetableUpdatedMessageDto(
-                                                    difference,
-                                                    timetableKey));
-                                        });
-                                } else {
-                                    log.debug(
-                                        "Timetable for {} has not changed, skipping message",
-                                        timetableKey);
-                                }
-
-                                timetableService.setTimetable(timetableKey,
-                                    newTimetable);
-                            } else {
+                            final TimetableDifference difference = getDifference(
+                                existingTimetable,
+                                newTimetable);
+                            if (!difference.newEvents.isEmpty() || !difference.removedEvents.isEmpty()) {
                                 log.info(
-                                    "No previous timetable found for {} found, skipping message and caching",
+                                    "Timetable for {} has changed - {} changes",
+                                    timetableKey,
+                                    difference.newEvents.size() + difference.removedEvents.size());
+
+                                // Send a message to each subscriber of the study program
+                                messagingService.getAllByStudyProgramId(
+                                        studyProgram.getId())
+                                    .forEach(messagingSubscription -> {
+                                        log.debug("Sending message...");
+
+                                        messagingService.sendMessage(
+                                            messagingSubscription,
+                                            new TimetableUpdatedMessageDto(
+                                                difference,
+                                                timetableKey));
+                                    });
+                            } else {
+                                log.debug(
+                                    "Timetable for {} has not changed, skipping message",
                                     timetableKey);
-                                timetableService.setTimetable(timetableKey,
-                                    newTimetable);
                             }
-                        })
-                        .join();
-                }
-            });
+
+                            timetableService.setTimetable(timetableKey,
+                                newTimetable);
+                        } else {
+                            log.info(
+                                "No previous timetable found for {} found, skipping message and caching",
+                                timetableKey);
+                            timetableService.setTimetable(timetableKey,
+                                newTimetable);
+                        }
+                    })
+                    .join();
+            }
+        });
 
     }
 

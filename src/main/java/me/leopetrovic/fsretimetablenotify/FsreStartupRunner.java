@@ -38,16 +38,25 @@ public class FsreStartupRunner implements ApplicationRunner {
         log.info("Timetable database fetched!");
 
         if (FirebaseApp.getApps().isEmpty()) {
-            log.info("Initializing Firebase...");
-            FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.getApplicationDefault())
-                .build();
-            FirebaseApp.initializeApp(options);
+            try {
+                var credentials = GoogleCredentials.getApplicationDefault();
+                log.info("Initializing Firebase...");
+                FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(credentials)
+                    .build();
+                FirebaseApp.initializeApp(options);
+            } catch (IOException e) {
+                log.warn("Failed to obtain Google Application Default " +
+                    "Credentials, Firebase will not be initialized.");
+            }
+
         }
 
         final List<IdNamePair<Long>> studyPrograms = timetableDatabaseService.getTimetableDatabase()
             .getStudyPrograms();
-        log.info("Populating timetable cache for next 2 weeks for " + studyPrograms.size() + " study programs...");
+        log.info(
+            "Populating timetable cache for next 2 weeks for {} study programs...",
+            studyPrograms.size());
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         studyPrograms.forEach(studyProgram -> {

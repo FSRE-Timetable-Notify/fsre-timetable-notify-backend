@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import lombok.Data;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,8 +19,19 @@ public class TimetableEvent {
     private Long id;
 
     @Schema(
-        description = "Name of the event",
+        description = "The type of the event (e.g. lecture, exercise, labs)",
         requiredMode = RequiredMode.REQUIRED
+    )
+    private TimetableEventType type;
+
+    @Schema(
+        description = "The year of study the event is intended for",
+        requiredMode = RequiredMode.REQUIRED
+    )
+    private TimetableEventYear year;
+
+    @Schema(
+        description = "Name of the event", requiredMode = RequiredMode.REQUIRED
     )
     private String name;
 
@@ -33,7 +44,7 @@ public class TimetableEvent {
         description = "Start date and time of the event",
         requiredMode = RequiredMode.REQUIRED
     )
-    private Instant startDate;
+    private ZonedDateTime startDateTime;
 
     @JsonFormat(
         shape = JsonFormat.Shape.STRING,
@@ -44,7 +55,7 @@ public class TimetableEvent {
         description = "End date and time of the event",
         requiredMode = RequiredMode.REQUIRED
     )
-    private Instant endDate;
+    private ZonedDateTime endDateTime;
 
     @Schema(
         description = "The IDs of the study programs this event is intended for",
@@ -93,4 +104,23 @@ public class TimetableEvent {
     public void addTeacherName(String teacherName) {
         this.teacherNames.add(teacherName);
     }
+
+    @Schema(description = "The type of the timetable event")
+    public enum TimetableEventType {
+        LECTURE,
+        EXERCISE,
+        LECTURE_AND_EXERCISE,
+        LABS,
+        OTHER
+    }
+
+    @Schema(description = "The type of the timetable event")
+    public enum TimetableEventYear {
+        FIRST,
+        SECOND,
+        THIRD,
+        FOURTH,
+        FIFTH
+    }
+
 }

@@ -26,14 +26,23 @@ import java.util.concurrent.CompletionException;
 
 @Service
 public class TimetableService {
+    private final FsreTimetableNotifyProperties fsreTimetableNotifyProperties;
+    private final ObjectMapper objectMapper;
+    private final InMemoryTimetableStore inMemoryTimetableStore;
+    private final TimetableDatabaseService timetableDatabaseService;
+
     @Autowired
-    FsreTimetableNotifyProperties fsreTimetableNotifyProperties;
-    @Autowired
-    private ObjectMapper objectMapper;
-    @Autowired
-    private InMemoryTimetableStore inMemoryTimetableStore;
-    @Autowired
-    private TimetableDatabaseService timetableDatabaseService;
+    public TimetableService(
+        FsreTimetableNotifyProperties fsreTimetableNotifyProperties,
+        ObjectMapper objectMapper,
+        InMemoryTimetableStore inMemoryTimetableStore,
+        TimetableDatabaseService timetableDatabaseService
+    ) {
+        this.fsreTimetableNotifyProperties = fsreTimetableNotifyProperties;
+        this.objectMapper = objectMapper;
+        this.inMemoryTimetableStore = inMemoryTimetableStore;
+        this.timetableDatabaseService = timetableDatabaseService;
+    }
 
     public Optional<Timetable> getTimetable(
         @NonNull
@@ -84,31 +93,34 @@ public class TimetableService {
         @NonNull
         TimetableKey timetableKey
     ) {
-        HttpClient httpClient = HttpClient.newHttpClient();
-        HttpRequest httpRequest = HttpRequest.newBuilder()
-            .uri(fsreTimetableNotifyProperties.timetableUri())
-            .POST(HttpRequest.BodyPublishers.ofString(toJson(new ExternalFsreTimetableRequest(
-                timetableKey.studyProgramId(),
-                timetableKey.yearWeek()))))
-            .build();
+        try (HttpClient httpClient = HttpClient.newHttpClient()) {
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(fsreTimetableNotifyProperties.timetableUri())
+                .POST(HttpRequest.BodyPublishers.ofString(toJson(new ExternalFsreTimetableRequest(
+                    timetableKey.studyProgramId(),
+                    timetableKey.yearWeek()))))
+                .build();
 
-        return httpClient.sendAsync(httpRequest,
-                HttpResponse.BodyHandlers.ofString())
-            .thenApply(HttpResponse::body)
-            .handle((body, throwable) -> {
-                if (throwable != null) {
-                    throw new CompletionException(new TimetableFetchException(
-                        throwable));
-                }
+            return httpClient.sendAsync(httpRequest,
+                    HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .handle((body, throwable) -> {
+                    if (throwable != null) {
+                        throw new CompletionException(new TimetableFetchException(
+                            throwable));
+                    }
 
-                try {
-                    return extendTimetable(objectMapper.readValue(body,
-                        Timetable.class));
-                } catch (JsonProcessingException e) {
-                    throw new CompletionException(new TimetableParseException(e));
-                }
-            });
-
+                    try {
+                        return extendTimetable(objectMapper.readValue(body,
+                            Timetable.class));
+                    } catch (JsonProcessingException e) {
+                        throw new CompletionException(new TimetableParseException(
+                            e));
+                    }
+                });
+        } catch (Exception e) {
+            throw new CompletionException(new TimetableFetchException(e));
+        }
     }
 
     private Timetable extendTimetable(
@@ -119,20 +131,17 @@ public class TimetableService {
 
         for (List<TimetableEvent> eventsForWeekDay : timetable.getWeekDays()) {
             for (TimetableEvent timetableEvent : eventsForWeekDay) {
-                timetableEvent.getTeacherIds().forEach(teacherId -> {
-                    timetableEvent.addTeacherName(timetableDatabase.getTeacherName(
-                        teacherId));
-                });
+                timetableEvent.getTeacherIds()
+                    .forEach(teacherId -> timetableEvent.addTeacherName(
+                        timetableDatabase.getTeacherName(teacherId)));
 
-                timetableEvent.getClassRoomIds().forEach(classRoomId -> {
-                    timetableEvent.addClassRoomName(timetableDatabase.getClassRoomName(
-                        classRoomId));
-                });
+                timetableEvent.getClassRoomIds()
+                    .forEach(classRoomId -> timetableEvent.addClassRoomName(
+                        timetableDatabase.getClassRoomName(classRoomId)));
 
-                timetableEvent.getStudyProgramIds().forEach(studyProgramId -> {
-                    timetableEvent.addStudyProgramName(timetableDatabase.getStudyProgramName(
-                        studyProgramId));
-                });
+                timetableEvent.getStudyProgramIds()
+                    .forEach(studyProgramId -> timetableEvent.addStudyProgramName(
+                        timetableDatabase.getStudyProgramName(studyProgramId)));
             }
         }
 

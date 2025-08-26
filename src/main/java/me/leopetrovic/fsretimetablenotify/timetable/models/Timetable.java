@@ -62,25 +62,4 @@ public class Timetable {
             saturday,
             sunday);
     }
-
-    public void setWeekDays(List<List<TimetableEvent>> weekDays) {
-        monday = weekDays.get(0);
-        tuesday = weekDays.get(1);
-        wednesday = weekDays.get(2);
-        thursday = weekDays.get(3);
-        friday = weekDays.get(4);
-        saturday = weekDays.get(5);
-        sunday = weekDays.get(6);
-    }
-
-    @JsonIgnore
-    public List<TimetableEvent> getEvents() {
-        return List.of(monday,
-            tuesday,
-            wednesday,
-            thursday,
-            friday,
-            saturday,
-            sunday).stream().flatMap(List::stream).toList();
-    }
 }

@@ -2,6 +2,7 @@ package me.leopetrovic.fsretimetablenotify.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.*;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -25,14 +26,20 @@ import java.util.List;
 
 @Service
 public class MessagingService {
-    @Autowired
-    ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
+    private final MessagingRepository messagingRepository;
+    private final JavaMailSender mailSender;
 
     @Autowired
-    MessagingRepository messagingRepository;
-
-    @Autowired
-    JavaMailSender mailSender;
+    public MessagingService(
+        ObjectMapper objectMapper,
+        MessagingRepository messagingRepository,
+        JavaMailSender mailSender
+    ) {
+        this.objectMapper = objectMapper;
+        this.messagingRepository = messagingRepository;
+        this.mailSender = mailSender;
+    }
 
     public List<MessagingSubscription> getAll() {
         return messagingRepository.findAll();
@@ -86,7 +93,7 @@ public class MessagingService {
         MessagingSubscription messagingSubscription,
         TimetableUpdatedMessageDto timetableUpdatedMessageDto
     ) {
-        if (messagingSubscription.getFcmToken().isPresent()) {
+        if (messagingSubscription.getFcmToken().isPresent() && !FirebaseApp.getApps().isEmpty()) {
             var fcmToken = messagingSubscription.getFcmToken().get();
             sendFirebaseMessage(fcmToken, timetableUpdatedMessageDto);
         } else if (messagingSubscription.getEmail().isPresent()) {
@@ -142,26 +149,27 @@ public class MessagingService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message);
 
-            String content = "<h1>Timetable updated</h1>" + "<p>Your timetable has been updated. The following changes have been made:</p>" + "<h4>New events:</h4>" + "<ul>";
+            StringBuilder content = new StringBuilder(
+                "<h1>Timetable updated</h1>" + "<p>Your timetable has been updated. The following changes have been made:</p>" + "<h4>New events:</h4>" + "<ul>");
 
             for (var event : timetableUpdatedMessageDto.difference()
                 .newEvents()) {
-                content += formatEvent(event, true);
+                content.append(formatEvent(event, true));
             }
 
-            content += "</ul><h4>Removed events:</h4><ul>";
+            content.append("</ul><h4>Removed events:</h4><ul>");
 
             for (var event : timetableUpdatedMessageDto.difference()
                 .removedEvents()) {
-                content += formatEvent(event, false);
+                content.append(formatEvent(event, false));
             }
 
-            content += "</ul>";
+            content.append("</ul>");
 
             helper.setSubject("Timetable updated");
             helper.setFrom("fsrenotifier@gmail.com", "FSRE Notifier");
             helper.setTo(email);
-            helper.setText(content, true);
+            helper.setText(content.toString(), true);
 
             mailSender.send(message);
         } catch (UnsupportedEncodingException e) {
@@ -179,8 +187,8 @@ public class MessagingService {
         var content = "";
 
         var eventName = event.getName();
-        var startDate = event.getStartDate();
-        var endDate = event.getEndDate();
+        var startDate = event.getStartDateTime();
+        var endDate = event.getEndDateTime();
         var teacherNames = event.getTeacherNames();
         var classRoomNames = event.getClassRoomNames();
         var studyProgramNames = event.getStudyProgramNames();
@@ -197,19 +205,19 @@ public class MessagingService {
         content += "<li>Date: " + dateFormatter.format(startDate) + "</li>";
 
         if (teacherNames.size() == 1) {
-            content += "<li>Teacher: " + teacherNames.get(0) + "</li>";
+            content += "<li>Teacher: " + teacherNames.getFirst() + "</li>";
         } else {
             content += "<li>With teachers: " + String.join(", ",
                 teacherNames) + "</li>";
         }
         if (classRoomNames.size() == 1) {
-            content += "<li>Class room: " + classRoomNames.get(0) + "</li>";
+            content += "<li>Class room: " + classRoomNames.getFirst() + "</li>";
         } else {
             content += "<li>In class rooms: " + String.join(", ",
                 classRoomNames) + "</li>";
         }
         if (studyProgramNames.size() == 1) {
-            content += "<li> Study program: " + studyProgramNames.get(0) + "</li>";
+            content += "<li> Study program: " + studyProgramNames.getFirst() + "</li>";
         } else {
             content += "<li>For study programs: " + String.join(", ",
                 studyProgramNames) + "</li>";

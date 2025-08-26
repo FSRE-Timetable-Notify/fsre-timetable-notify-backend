@@ -21,8 +21,12 @@ import java.util.concurrent.CompletableFuture;
 @RequestMapping("/timetable")
 @Validated
 public class TimetableController {
+    private final TimetableService timetableService;
+
     @Autowired
-    private TimetableService timetableService;
+    public TimetableController(TimetableService timetableService) {
+        this.timetableService = timetableService;
+    }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
