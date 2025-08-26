@@ -1,12 +1,17 @@
 package me.leopetrovic.fsretimetablenotify.common.properties;
 
-import java.net.URI;
-
+import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import jakarta.validation.constraints.NotBlank;
+import java.net.URI;
 
 @ConfigurationProperties(prefix = "fsre-timetable-notify")
-public record FsreTimetableNotifyProperties(@NotBlank @URL URI timetableUri, @NotBlank @URL URI timetableDbUri) {
-}
+public record FsreTimetableNotifyProperties(
+    @NotBlank
+    @URL
+    URI timetableUri,
+    @NotBlank
+    @URL
+    URI timetableDbUri
+) {}

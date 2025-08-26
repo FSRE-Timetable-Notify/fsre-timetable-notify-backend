@@ -12,8 +12,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class FsreTimetableNotifyBackendApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(FsreTimetableNotifyBackendApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(FsreTimetableNotifyBackendApplication.class,
+            args);
+    }
 
 }
