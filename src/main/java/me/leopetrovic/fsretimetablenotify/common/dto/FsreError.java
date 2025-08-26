@@ -8,8 +8,6 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.http.HttpStatus;
 
-import java.util.Optional;
-
 @Getter
 @Setter
 @ToString
@@ -41,13 +39,13 @@ public class FsreError {
         description = "Optional details of the error",
         example = "The request failed because the network is unreachable"
     )
-    private Optional<String> details;
+    private String details;
 
     public FsreError(HttpStatus status, String error, String message) {
         this.status = status;
         this.error = error;
         this.message = message;
-        this.details = Optional.empty();
+        this.details = null;
     }
 
     public FsreError(
@@ -59,6 +57,6 @@ public class FsreError {
         this.status = status;
         this.error = error;
         this.message = message;
-        this.details = Optional.of(details);
+        this.details = details;
     }
 }

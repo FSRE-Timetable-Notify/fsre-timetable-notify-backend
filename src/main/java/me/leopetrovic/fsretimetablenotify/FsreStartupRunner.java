@@ -22,18 +22,23 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Component
 public class FsreStartupRunner implements ApplicationRunner {
-    @Autowired
-    private TimetableDatabaseService timetableDatabaseService;
+    private final TimetableDatabaseService timetableDatabaseService;
+    private final TimetableService timetableService;
 
     @Autowired
-    private TimetableService timetableService;
+    public FsreStartupRunner(
+        TimetableDatabaseService timetableDatabaseService,
+        TimetableService timetableService
+    ) {
+        this.timetableDatabaseService = timetableDatabaseService;
+        this.timetableService = timetableService;
+    }
 
     @Override
-    public void run(ApplicationArguments args) throws IOException {
+    public void run(ApplicationArguments args) {
         log.info("Fetching timetable database...");
         timetableDatabaseService.fetchTimetableDatabase()
-            .thenAccept(timetableDatabase -> timetableDatabaseService.setTimetableDatabase(
-                timetableDatabase))
+            .thenAccept(timetableDatabaseService::setTimetableDatabase)
             .join();
         log.info("Timetable database fetched!");
 
@@ -68,11 +73,9 @@ public class FsreStartupRunner implements ApplicationRunner {
 
             for (TimetableKey timetableKey : new TimetableKey[]{
                 currentTimetableKey, nextTimetableKey}) {
-                log.debug("Caching timetable for " + timetableKey);
+                log.debug("Caching timetable for {}", timetableKey);
                 CompletableFuture<Void> future = timetableService.fetchTimetable(
-                    timetableKey).thenAccept(newTimetable -> {
-                    timetableService.setTimetable(timetableKey, newTimetable);
-                });
+                    timetableKey).thenAccept(newTimetable -> timetableService.setTimetable(timetableKey, newTimetable));
                 futures.add(future);
             }
         });

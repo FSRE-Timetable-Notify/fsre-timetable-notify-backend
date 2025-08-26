@@ -1,6 +1,5 @@
 package me.leopetrovic.fsretimetablenotify.timetabledatabase.transformers;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -19,8 +18,8 @@ public class TimetableDatabaseDeserializer extends JsonDeserializer<TimetableDat
     @Override
     public TimetableDatabase deserialize(
         JsonParser p,
-        DeserializationContext ctxt
-    ) throws IOException, JacksonException {
+        DeserializationContext ctx
+    ) throws IOException {
         JsonNode node = p.getCodec().readTree(p);
         JsonNode tablesNode = node.get("r").get("tables");
 

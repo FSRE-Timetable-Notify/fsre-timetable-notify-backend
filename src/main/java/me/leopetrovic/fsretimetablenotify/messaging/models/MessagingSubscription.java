@@ -22,11 +22,11 @@ public class MessagingSubscription {
     )
     private UUID id;
 
-    @Column(name = "fcm_token", nullable = true)
+    @Column(name = "fcm_token")
     @Schema(description = "The FCM token of the subscription")
     private String fcmToken;
 
-    @Column(name = "email", nullable = true)
+    @Column(name = "email")
     @Schema(description = "The email of the subscription")
     private String email;
 

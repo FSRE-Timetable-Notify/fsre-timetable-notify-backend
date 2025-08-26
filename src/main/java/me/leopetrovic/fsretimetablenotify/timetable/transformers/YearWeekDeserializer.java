@@ -1,6 +1,5 @@
 package me.leopetrovic.fsretimetablenotify.timetable.transformers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import org.springframework.boot.jackson.JsonComponent;
 import org.threeten.extra.YearWeek;
@@ -13,7 +12,7 @@ public class YearWeekDeserializer extends JsonDeserializer<YearWeek> {
     public YearWeek deserialize(
         com.fasterxml.jackson.core.JsonParser p,
         com.fasterxml.jackson.databind.DeserializationContext ctxt
-    ) throws IOException, JsonProcessingException {
+    ) throws IOException {
         return YearWeek.parse(p.getText());
     }
 }
