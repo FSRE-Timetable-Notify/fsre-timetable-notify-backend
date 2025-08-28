@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import me.leopetrovic.fsretimetablenotify.timetable.models.Timetable;
 import me.leopetrovic.fsretimetablenotify.timetable.models.TimetableKey;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,25 +44,22 @@ public class TimetableController {
         )}
     )
     public CompletableFuture<ResponseEntity<Timetable>> getTimetable(
+        @Nullable
         @RequestParam
         @Parameter(
-            description = "Study program",
-            required = true,
-            example = "-54"
+            description = "Study program", example = "-54"
         )
         Long studyProgram,
+        @NotNull
         @RequestParam
         @Parameter(
-            description = "ISO week",
-            required = true,
-            example = "2024-W09"
+            description = "ISO week", required = true, example = "2024-W09"
         )
         String isoWeek
     ) {
         final TimetableKey timetableKey = new TimetableKey(studyProgram,
             YearWeek.parse(isoWeek));
 
-        return timetableService.getOrFetchTimetable(timetableKey)
-            .thenApply(ResponseEntity::ok);
+        return timetableService.getOrFetchTimetable(timetableKey).thenApply(ResponseEntity::ok);
     }
 }

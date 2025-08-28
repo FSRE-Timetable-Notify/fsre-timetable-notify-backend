@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
 import me.leopetrovic.fsretimetablenotify.common.dto.FsreError;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.annotation.Order;
@@ -14,12 +15,14 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+@Slf4j
 @Order(2)
 @ControllerAdvice
 public class FsreTimetableNotifyBackendControllerAdvice {
     // Global exception handler
     @ExceptionHandler(Exception.class)
     public ResponseEntity<FsreError> handleException(Exception e) {
+        log.error("e: ", e);
         if (AnnotationUtils.findAnnotation(e.getClass(),
             ResponseStatus.class) != null) {
             throw (RuntimeException) e;

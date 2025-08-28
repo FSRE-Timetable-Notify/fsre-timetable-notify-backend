@@ -47,25 +47,26 @@ public class TimingService {
             studyPrograms.size());
         studyPrograms.forEach(studyProgram -> {
             final List<MessagingSubscription> subscribers = messagingService.getAllByStudyProgramId(
-                studyProgram.getId());
+                studyProgram.id());
 
             // If there are no subscriptions for the study program, skip
             if (subscribers.isEmpty()) {
                 log.debug(
                     "No subscriptions found for study program {}, skipping",
-                    studyProgram.getId());
+                    studyProgram.id());
                 return;
             } else {
                 log.info("Found {} subscriptions for study program {}",
                     subscribers.size(),
-                    studyProgram.getId());
+                    studyProgram.id());
             }
 
             // Else, fetch the timetable for the current and next week
             final TimetableKey currentTimetableKey = new TimetableKey(
-                studyProgram.getId(),
+                studyProgram.id(),
                 YearWeek.now());
-            final TimetableKey nextTimetableKey = new TimetableKey(studyProgram.getId(),
+            final TimetableKey nextTimetableKey =
+                new TimetableKey(studyProgram.id(),
                 YearWeek.now().plusWeeks(1));
 
             for (TimetableKey timetableKey : new TimetableKey[]{
@@ -91,7 +92,7 @@ public class TimingService {
 
                                 // Send a message to each subscriber of the study program
                                 messagingService.getAllByStudyProgramId(
-                                        studyProgram.getId())
+                                        studyProgram.id())
                                     .forEach(messagingSubscription -> {
                                         log.debug("Sending message...");
 

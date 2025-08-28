@@ -57,7 +57,8 @@ public class FsreStartupRunner implements ApplicationRunner {
 
         }
 
-        final List<IdNamePair<Long>> studyPrograms = timetableDatabaseService.getTimetableDatabase()
+        final var studyPrograms =
+            timetableDatabaseService.getTimetableDatabase()
             .getStudyPrograms();
         log.info(
             "Populating timetable cache for next 2 weeks for {} study programs...",
@@ -66,9 +67,10 @@ public class FsreStartupRunner implements ApplicationRunner {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         studyPrograms.forEach(studyProgram -> {
             final TimetableKey currentTimetableKey = new TimetableKey(
-                studyProgram.getId(),
+                studyProgram.id(),
                 YearWeek.now());
-            final TimetableKey nextTimetableKey = new TimetableKey(studyProgram.getId(),
+            final TimetableKey nextTimetableKey =
+                new TimetableKey(studyProgram.id(),
                 YearWeek.now().plusWeeks(1));
 
             for (TimetableKey timetableKey : new TimetableKey[]{

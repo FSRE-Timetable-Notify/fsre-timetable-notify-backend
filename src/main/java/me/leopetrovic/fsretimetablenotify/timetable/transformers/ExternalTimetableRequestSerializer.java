@@ -4,10 +4,14 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import me.leopetrovic.fsretimetablenotify.timetable.dto.ExternalFsreTimetableRequest;
+import me.leopetrovic.fsretimetablenotify.timetabledatabase.TimetableDatabaseService;
+import me.leopetrovic.fsretimetablenotify.timetabledatabase.models.StudyProgram;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jackson.JsonComponent;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
+import java.util.List;
 
 @JsonComponent
 public class ExternalTimetableRequestSerializer extends JsonSerializer<ExternalFsreTimetableRequest> {

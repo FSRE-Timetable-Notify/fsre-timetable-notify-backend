@@ -13,7 +13,10 @@ import org.springframework.boot.jackson.JsonComponent;
 import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @JsonComponent
 public class TimetableDeserializer extends JsonDeserializer<Timetable> {
@@ -71,13 +74,16 @@ public class TimetableDeserializer extends JsonDeserializer<Timetable> {
             List<Long> classRoomIds = parseIds(itemNode.get("classroomids"));
             List<Long> teacherIds = parseIds(itemNode.get("teacherids"));
 
-            List<String> studyProgramNames =
-                studyProgramIds.stream().map(studyProgramId -> timetableDatabaseService.getTimetableDatabase()
-                    .getStudyProgramName(studyProgramId)).toList();
+            List<String> studyProgramNames = studyProgramIds.stream()
+                .map(studyProgramId -> timetableDatabaseService.getTimetableDatabase()
+                    .getStudyProgramName(studyProgramId))
+                .toList();
 
             TimetableEvent event = new TimetableEvent();
             event.setId(id);
             event.setName(name);
+            event.setDepartment(determineTimetableEventDepartment(
+                studyProgramNames.getFirst()));
             event.setType(determineTimetableEventType(name));
             event.setYear(determineTimetableEventYear(studyProgramNames.getFirst()));
             event.setStartDateTime(utcStart);
@@ -92,19 +98,19 @@ public class TimetableDeserializer extends JsonDeserializer<Timetable> {
 
         Timetable timetable = new Timetable();
         timetable.setMonday(eventsByDayOfWeek.getOrDefault(DayOfWeek.MONDAY,
-            Collections.emptyList()));
+            new ArrayList<>()));
         timetable.setTuesday(eventsByDayOfWeek.getOrDefault(DayOfWeek.TUESDAY,
-            Collections.emptyList()));
+            new ArrayList<>()));
         timetable.setWednesday(eventsByDayOfWeek.getOrDefault(DayOfWeek.WEDNESDAY,
-            Collections.emptyList()));
+            new ArrayList<>()));
         timetable.setThursday(eventsByDayOfWeek.getOrDefault(DayOfWeek.THURSDAY,
-            Collections.emptyList()));
+            new ArrayList<>()));
         timetable.setFriday(eventsByDayOfWeek.getOrDefault(DayOfWeek.FRIDAY,
-            Collections.emptyList()));
+            new ArrayList<>()));
         timetable.setSaturday(eventsByDayOfWeek.getOrDefault(DayOfWeek.SATURDAY,
-            Collections.emptyList()));
+            new ArrayList<>()));
         timetable.setSunday(eventsByDayOfWeek.getOrDefault(DayOfWeek.SUNDAY,
-            Collections.emptyList()));
+            new ArrayList<>()));
 
         return timetable;
     }
@@ -113,18 +119,38 @@ public class TimetableDeserializer extends JsonDeserializer<Timetable> {
         List<Long> ids = new ArrayList<>();
         if (idsNode.isArray()) {
             for (JsonNode idNode : idsNode) {
+                if (idNode.asText().isEmpty()) {
+                    continue;
+                }
                 ids.add(Long.parseLong(idNode.asText()));
             }
         }
         return ids;
     }
 
+    private TimetableEvent.TimetableEventDepartment determineTimetableEventDepartment(
+        String studyProgramName
+    ) {
+        var computerEngineering = "računarstv";
+        var electricalEngineering = "elektrotehnik";
+        var mechanicalEngineering = "strojarstv";
+
+        if (studyProgramName.toLowerCase().contains(computerEngineering)) {
+            return TimetableEvent.TimetableEventDepartment.COMPUTER_SCIENCE;
+        } else if (studyProgramName.toLowerCase()
+            .contains(electricalEngineering)) {
+            return TimetableEvent.TimetableEventDepartment.ELECTRICAL_ENGINEERING;
+        } else if (studyProgramName.toLowerCase()
+            .contains(mechanicalEngineering)) {
+            return TimetableEvent.TimetableEventDepartment.MECHANICAL_ENGINEERING;
+        } else {
+            return TimetableEvent.TimetableEventDepartment.COMPUTER_SCIENCE;
+        }
+    }
+
     private TimetableEvent.TimetableEventType determineTimetableEventType(String subject) {
         var regex = ".*-(\\s*)?(P|V|P\\+V|V\\+P)(\\s*)?$";
         switch (subject.replaceAll(regex, "$2")) {
-            case "P" -> {
-                return TimetableEvent.TimetableEventType.LECTURE;
-            }
             case "V" -> {
                 return TimetableEvent.TimetableEventType.EXERCISE;
             }
@@ -132,7 +158,7 @@ public class TimetableDeserializer extends JsonDeserializer<Timetable> {
                 return TimetableEvent.TimetableEventType.LECTURE_AND_EXERCISE;
             }
             default -> {
-                return TimetableEvent.TimetableEventType.OTHER;
+                return TimetableEvent.TimetableEventType.LECTURE;
             }
         }
     }

@@ -2,6 +2,7 @@ package me.leopetrovic.fsretimetablenotify.timetable;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Nonnull;
 import me.leopetrovic.fsretimetablenotify.common.properties.FsreTimetableNotifyProperties;
 import me.leopetrovic.fsretimetablenotify.timetable.dto.ExternalFsreTimetableRequest;
 import me.leopetrovic.fsretimetablenotify.timetable.exceptions.TimetableFetchException;
@@ -10,9 +11,9 @@ import me.leopetrovic.fsretimetablenotify.timetable.models.Timetable;
 import me.leopetrovic.fsretimetablenotify.timetable.models.TimetableEvent;
 import me.leopetrovic.fsretimetablenotify.timetable.models.TimetableKey;
 import me.leopetrovic.fsretimetablenotify.timetabledatabase.TimetableDatabaseService;
+import me.leopetrovic.fsretimetablenotify.timetabledatabase.models.StudyProgram;
 import me.leopetrovic.fsretimetablenotify.timetabledatabase.models.TimetableDatabase;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -45,16 +46,16 @@ public class TimetableService {
     }
 
     public Optional<Timetable> getTimetable(
-        @NonNull
+        @Nonnull
         TimetableKey timetableKey
     ) {
         return inMemoryTimetableStore.getTimetable(timetableKey);
     }
 
     public void setTimetable(
-        @NonNull
+        @Nonnull
         TimetableKey timetableKey,
-        @NonNull
+        @Nonnull
         Timetable timetable
     ) {
         inMemoryTimetableStore.setTimetable(timetableKey, timetable);
@@ -62,7 +63,7 @@ public class TimetableService {
 
     @Async
     public CompletableFuture<Timetable> getOrFetchTimetable(
-        @NonNull
+        @Nonnull
         TimetableKey timetableKey
     ) {
         final Optional<Timetable> maybeTimetable = getTimetable(timetableKey);
@@ -90,41 +91,59 @@ public class TimetableService {
 
     @Async
     public CompletableFuture<Timetable> fetchTimetable(
-        @NonNull
+        @Nonnull
         TimetableKey timetableKey
     ) {
         try (HttpClient httpClient = HttpClient.newHttpClient()) {
-            HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(fsreTimetableNotifyProperties.timetableUri())
-                .POST(HttpRequest.BodyPublishers.ofString(toJson(new ExternalFsreTimetableRequest(
-                    timetableKey.studyProgramId(),
-                    timetableKey.yearWeek()))))
-                .build();
+            var studyProgramIds = timetableKey.studyProgramId() != null
+                ? List.of(timetableKey.studyProgramId())
+                : timetableDatabaseService.getTimetableDatabase()
+                    .getStudyPrograms()
+                    .stream()
+                    .map(StudyProgram::id)
+                    .toList();
 
-            return httpClient.sendAsync(httpRequest,
-                    HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .handle((body, throwable) -> {
-                    if (throwable != null) {
-                        throw new CompletionException(new TimetableFetchException(
-                            throwable));
-                    }
+            var futures = studyProgramIds.stream().map(studyProgramId -> {
+                HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(fsreTimetableNotifyProperties.timetableUri())
+                    .POST(HttpRequest.BodyPublishers.ofString(toJson(new ExternalFsreTimetableRequest(
+                        studyProgramId,
+                        timetableKey.yearWeek()))))
+                    .build();
 
-                    try {
-                        return extendTimetable(objectMapper.readValue(body,
-                            Timetable.class));
-                    } catch (JsonProcessingException e) {
-                        throw new CompletionException(new TimetableParseException(
-                            e));
-                    }
-                });
+                return httpClient.sendAsync(httpRequest,
+                        HttpResponse.BodyHandlers.ofString())
+                    .thenApply(HttpResponse::body)
+                    .handle((body, throwable) -> {
+                        if (throwable != null) {
+                            throw new CompletionException(new TimetableFetchException(
+                                throwable));
+                        }
+
+                        try {
+                            return extendTimetable(objectMapper.readValue(body,
+                                Timetable.class));
+                        } catch (JsonProcessingException e) {
+                            throw new CompletionException(new TimetableParseException(
+                                e));
+                        }
+                    });
+            }).toList();
+
+            return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .thenApply(v -> futures.stream()
+                    .map(CompletableFuture::join)
+                    .reduce((t1, t2) -> {
+                        t1.merge(t2);
+                        return t1;
+                    }).orElseThrow(TimetableFetchException::new));
         } catch (Exception e) {
             throw new CompletionException(new TimetableFetchException(e));
         }
     }
 
     private Timetable extendTimetable(
-        @NonNull
+        @Nonnull
         Timetable timetable
     ) {
         final TimetableDatabase timetableDatabase = timetableDatabaseService.getTimetableDatabase();

@@ -19,8 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/timetable-database")
 @Validated
 public class TimetableDatabaseController {
+    private final TimetableDatabaseService timetableDatabaseService;
+
     @Autowired
-    private TimetableDatabaseService timetableDatabaseService;
+    public TimetableDatabaseController(TimetableDatabaseService timetableDatabaseService) {
+        this.timetableDatabaseService = timetableDatabaseService;
+    }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)

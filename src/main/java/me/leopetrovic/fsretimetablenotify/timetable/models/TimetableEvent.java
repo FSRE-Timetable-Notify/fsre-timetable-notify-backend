@@ -19,6 +19,12 @@ public class TimetableEvent {
     private Long id;
 
     @Schema(
+        description = "The department which the event belongs to",
+        requiredMode = RequiredMode.REQUIRED
+    )
+    private TimetableEventDepartment department;
+
+    @Schema(
         description = "The type of the event (e.g. lecture, exercise, labs)",
         requiredMode = RequiredMode.REQUIRED
     )
@@ -105,16 +111,22 @@ public class TimetableEvent {
         this.teacherNames.add(teacherName);
     }
 
+    @Schema(description = "The department which the timetable event belongs to")
+    public enum TimetableEventDepartment {
+        COMPUTER_SCIENCE,
+        ELECTRICAL_ENGINEERING,
+        MECHANICAL_ENGINEERING,
+    }
+
     @Schema(description = "The type of the timetable event")
     public enum TimetableEventType {
         LECTURE,
         EXERCISE,
         LECTURE_AND_EXERCISE,
         LABS,
-        OTHER
     }
 
-    @Schema(description = "The type of the timetable event")
+    @Schema(description = "The year of study the timetable event is intended for")
     public enum TimetableEventYear {
         FIRST,
         SECOND,

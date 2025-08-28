@@ -10,10 +10,10 @@ import java.util.List;
 @Schema(description = "The database of timetable definitions (names of subjects, teachers, etc.)")
 public class TimetableDatabase {
     @Schema(
-        description = "List of study programs (id of the study program and readable name)",
+        description = "List of study programs",
         requiredMode = RequiredMode.REQUIRED
     )
-    private List<IdNamePair<Long>> studyPrograms;
+    private List<StudyProgram> studyPrograms;
 
     @Schema(
         description = "List of classrooms (id of the classroom and readable name)",
@@ -40,7 +40,11 @@ public class TimetableDatabase {
     private List<IdNamePair<Long>> teachers;
 
     public String getStudyProgramName(Long id) {
-        return getNameById(studyPrograms, id);
+        return studyPrograms.stream()
+            .filter(sp -> sp.id().equals(id))
+            .map(StudyProgram::name)
+            .findFirst()
+            .orElse(null);
     }
 
     public String getClassRoomName(Long id) {
