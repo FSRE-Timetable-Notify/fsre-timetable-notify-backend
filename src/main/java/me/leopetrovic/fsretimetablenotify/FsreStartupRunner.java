@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import me.leopetrovic.fsretimetablenotify.timetable.TimetableService;
 import me.leopetrovic.fsretimetablenotify.timetable.models.TimetableKey;
 import me.leopetrovic.fsretimetablenotify.timetabledatabase.TimetableDatabaseService;
-import me.leopetrovic.fsretimetablenotify.timetabledatabase.models.TimetableDatabase.IdNamePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
