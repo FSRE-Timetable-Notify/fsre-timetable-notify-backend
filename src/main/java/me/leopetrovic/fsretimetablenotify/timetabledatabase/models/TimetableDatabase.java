@@ -70,19 +70,4 @@ public class TimetableDatabase {
             .findFirst()
             .orElse(null);
     }
-
-    @Data
-    @Schema(description = "A pair of an ID and a name, used in the timetable database")
-    public static class IdNamePair<T> {
-        @Schema(
-            description = "The ID of the item",
-            requiredMode = RequiredMode.REQUIRED
-        )
-        private T id;
-        @Schema(
-            description = "The name of the item",
-            requiredMode = RequiredMode.REQUIRED
-        )
-        private String name;
-    }
 }

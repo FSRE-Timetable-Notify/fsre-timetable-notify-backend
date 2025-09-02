@@ -18,8 +18,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/messaging")
 @Validated
 public class MessagingController {
+    private final MessagingService messagingService;
+
     @Autowired
-    private MessagingService messagingService;
+    public MessagingController(MessagingService messagingService) {
+        this.messagingService = messagingService;
+    }
 
     @PostMapping("/subscribe")
     @ResponseStatus(HttpStatus.OK)
