@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class TimetableService {
@@ -131,12 +134,18 @@ public class TimetableService {
             }).toList();
 
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                .thenApply(v -> futures.stream()
-                    .map(CompletableFuture::join)
-                    .reduce((t1, t2) -> {
-                        t1.merge(t2);
-                        return t1;
-                    }).orElseThrow(TimetableFetchException::new));
+                .thenApply(v -> {
+                    Timetable combined = futures.stream()
+                        .map(CompletableFuture::join)
+                        .reduce((t1, t2) -> {
+                            t1.merge(t2);
+                            return t1;
+                        }).orElseThrow(TimetableFetchException::new);
+
+                    deduplicateTimetable(combined);
+
+                    return combined;
+                });
         } catch (Exception e) {
             throw new CompletionException(new TimetableFetchException(e));
         }
@@ -165,6 +174,45 @@ public class TimetableService {
         }
 
         return timetable;
+    }
+
+    private void deduplicateTimetable(Timetable timetable) {
+        if (timetable == null) {
+            return;
+        }
+
+        timetable.setMonday(dedupeList(timetable.getMonday()));
+        timetable.setTuesday(dedupeList(timetable.getTuesday()));
+        timetable.setWednesday(dedupeList(timetable.getWednesday()));
+        timetable.setThursday(dedupeList(timetable.getThursday()));
+        timetable.setFriday(dedupeList(timetable.getFriday()));
+        timetable.setSaturday(dedupeList(timetable.getSaturday()));
+        timetable.setSunday(dedupeList(timetable.getSunday()));
+    }
+
+    private List<TimetableEvent> dedupeList(List<TimetableEvent> list) {
+        if (list == null || list.isEmpty()) {
+            return list;
+        }
+
+        // Preserve order and keep first occurrence for each id
+        var map = list.stream()
+            .filter(e -> e != null && e.getId() != null)
+            .collect(Collectors.toMap(
+                TimetableEvent::getId,
+                e -> e,
+                (first, second) -> first,
+                LinkedHashMap::new
+            ));
+
+        var deduped = new ArrayList<>(map.values());
+
+        // If there were null ids or null events, keep them at the end (optional)
+        list.stream()
+            .filter(e -> e == null || e.getId() == null)
+            .forEach(deduped::add);
+
+        return deduped;
     }
 
     private String toJson(Object object) {
