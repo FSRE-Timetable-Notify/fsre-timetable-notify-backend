@@ -23,10 +23,17 @@ public record StudyProgram(
     )
     TimetableEvent.TimetableEventYear studyYear,
 
-
     @Schema(
         description = "The department which the study program belongs to",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
-    TimetableEvent.TimetableEventDepartment department
+    TimetableEvent.TimetableEventDepartment department,
+
+    @Schema(
+        description = "The direction/specialization which the study program " +
+            "belongs to",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+        nullable = true
+    )
+    String direction
 ) {}

@@ -37,6 +37,14 @@ public class TimetableEvent {
     private TimetableEventYear year;
 
     @Schema(
+        description = "The directions/specializations which the event is " +
+            "intended for",
+        requiredMode = RequiredMode.REQUIRED,
+        nullable = true
+    )
+    private List<String> directions;
+
+    @Schema(
         description = "Name of the event", requiredMode = RequiredMode.REQUIRED
     )
     private String name;

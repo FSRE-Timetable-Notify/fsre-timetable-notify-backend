@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import me.leopetrovic.fsretimetablenotify.common.service.ParsingService;
 import me.leopetrovic.fsretimetablenotify.timetable.models.Timetable;
 import me.leopetrovic.fsretimetablenotify.timetable.models.TimetableEvent;
 import me.leopetrovic.fsretimetablenotify.timetabledatabase.TimetableDatabaseService;
@@ -13,10 +14,7 @@ import org.springframework.boot.jackson.JsonComponent;
 import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @JsonComponent
 public class TimetableDeserializer extends JsonDeserializer<Timetable> {
@@ -24,10 +22,12 @@ public class TimetableDeserializer extends JsonDeserializer<Timetable> {
         "HH:mm");
 
     private final TimetableDatabaseService timetableDatabaseService;
+    private final ParsingService parsingService;
 
     @Autowired
-    public TimetableDeserializer(TimetableDatabaseService timetableDatabaseService) {
+    public TimetableDeserializer(TimetableDatabaseService timetableDatabaseService, ParsingService parsingService) {
         this.timetableDatabaseService = timetableDatabaseService;
+        this.parsingService = parsingService;
     }
 
     @Override
@@ -82,10 +82,14 @@ public class TimetableDeserializer extends JsonDeserializer<Timetable> {
             TimetableEvent event = new TimetableEvent();
             event.setId(id);
             event.setName(name);
-            event.setDepartment(determineTimetableEventDepartment(
+            event.setDepartment(parsingService.determineTimetableEventDepartment(
                 studyProgramNames.getFirst()));
-            event.setType(determineTimetableEventType(name));
-            event.setYear(determineTimetableEventYear(studyProgramNames.getFirst()));
+            event.setType(parsingService.determineTimetableEventType(name));
+            event.setYear(parsingService.determineTimetableEventYear(studyProgramNames.getFirst()));
+            var directions =
+                parsingService.determineTimetableEventDirections(studyProgramNames).stream().filter(
+                    Objects::nonNull).toList();
+            event.setDirections(directions.isEmpty() ? null : directions);
             event.setStartDateTime(utcStart);
             event.setEndDateTime(utcEnd);
             event.setStudyProgramIds(studyProgramIds);
@@ -126,61 +130,5 @@ public class TimetableDeserializer extends JsonDeserializer<Timetable> {
             }
         }
         return ids;
-    }
-
-    private TimetableEvent.TimetableEventDepartment determineTimetableEventDepartment(
-        String studyProgramName
-    ) {
-        var computerEngineering = "računarstv";
-        var electricalEngineering = "elektrotehnik";
-        var mechanicalEngineering = "strojarstv";
-
-        if (studyProgramName.toLowerCase().contains(computerEngineering)) {
-            return TimetableEvent.TimetableEventDepartment.COMPUTER_SCIENCE;
-        } else if (studyProgramName.toLowerCase()
-            .contains(electricalEngineering)) {
-            return TimetableEvent.TimetableEventDepartment.ELECTRICAL_ENGINEERING;
-        } else if (studyProgramName.toLowerCase()
-            .contains(mechanicalEngineering)) {
-            return TimetableEvent.TimetableEventDepartment.MECHANICAL_ENGINEERING;
-        } else {
-            return TimetableEvent.TimetableEventDepartment.COMPUTER_SCIENCE;
-        }
-    }
-
-    private TimetableEvent.TimetableEventType determineTimetableEventType(String subject) {
-        var regex = ".*-(\\s*)?(P|V|P\\+V|V\\+P)(\\s*)?$";
-        switch (subject.replaceAll(regex, "$2")) {
-            case "V" -> {
-                return TimetableEvent.TimetableEventType.EXERCISE;
-            }
-            case "P+V", "V+P" -> {
-                return TimetableEvent.TimetableEventType.LECTURE_AND_EXERCISE;
-            }
-            default -> {
-                return TimetableEvent.TimetableEventType.LECTURE;
-            }
-        }
-    }
-
-    private TimetableEvent.TimetableEventYear determineTimetableEventYear(String studyProgramName) {
-        var regex = ".*-(\\s*)?(\\d)\\.? ?(godina|god).*?$";
-        switch (studyProgramName.replaceAll(regex, "$2")) {
-            case "2" -> {
-                return TimetableEvent.TimetableEventYear.SECOND;
-            }
-            case "3" -> {
-                return TimetableEvent.TimetableEventYear.THIRD;
-            }
-            case "4" -> {
-                return TimetableEvent.TimetableEventYear.FOURTH;
-            }
-            case "5" -> {
-                return TimetableEvent.TimetableEventYear.FIFTH;
-            }
-            default -> {
-                return TimetableEvent.TimetableEventYear.FIRST;
-            }
-        }
     }
 }
